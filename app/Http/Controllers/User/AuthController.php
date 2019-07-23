@@ -30,7 +30,7 @@ class AuthController extends Controller
      protected $base_url;
     public function __construct(UrlGenerator $url){
         $this->middleware("auth:users",['except'=>['login','register','sendResetPasswordLink']]);
-        $this->user = new User();
+        $this->user = new User;
         $this->base_url = $url->to("/");  //this is to make the baseurl available in this controller
     }
 

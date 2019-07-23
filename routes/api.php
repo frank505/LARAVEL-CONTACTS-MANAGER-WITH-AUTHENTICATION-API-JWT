@@ -20,5 +20,7 @@ Route::group(["prefix"=>"user",
     Route::post('register', 'AuthController@register');    
     Route::post('login', 'AuthController@login'); 
     Route::post('contact/add','ContactController@addContact');
+    Route::get('contact/get-all/{pagination?}','ContactController@getPaginatedData');
+    Route::get('contact/search/{search}/{pagination?}','ContactController@searchData');
 });
 
