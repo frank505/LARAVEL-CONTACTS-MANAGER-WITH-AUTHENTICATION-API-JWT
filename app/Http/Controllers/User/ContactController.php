@@ -130,7 +130,7 @@ class ContactController extends Controller
   public function searchData(Request $request,$search,$pagination=null)
   {
     $file_directory = $this->base_url."/profile_images";
-
+   
   //laravel automatically converts it to json and sends a response text too
   //$auth = auth("admins")->authenticate($request->token);
   if($pagination==null || $pagination==""){
@@ -154,9 +154,134 @@ class ContactController extends Controller
       ], 200);  
   }
 
+ //fetch single request
+  public function GetSingleData(Request $request,$id)
+  {
+    
+    $contacts = $this->contacts::find($id);
+    $firstname = $contacts->firstname;
+    $lastname = $contacts->lastname;
+    $email = $contacts->email;
+    $phonenumber = $contacts->phonenumber;
+    $file_directory = $this->base_url."/profile_images";
+    $image_file = $contacts->image_file;
+    $data = array("firstname"=>$firstname,"lastname"=>$lastname,"email"=>$email,"phonenumber"=>$phonenumber,"file_directory"=>$file_directory,"image_file"=>$image_file);    
+    return response()->json([
+       'success'=>true,
+       'data'=>$data,
+       'message'=>'data fetched successfully',
+       'file_directory'=>$file_directory
+    ],200);
+  }
+
+  public function editSingleData(Request $request,$id)
+  {
+
+    $validator = Validator::make($request->all(),
+    [
+        'firstname' => 'required|string',
+    'phonenumber' => 'required',
+            ]
+);
 
 
+if($validator->fails()){
+    return response()->json([
+     "success"=>false,
+     "message"=> "one or more fields are either missing or invalid expected type entered
+     please ensure to enter email or numbers where required",
+     "validator_err_message"=>$validator->messages()->toArray(),
+     "data"=>$request->all()
+    ],400);    
+  }
+ 
+  $findData = $this->contacts::find($id);
+  if(!$findData)
+   {
+    return response()->json([
+      "success"=>false,
+      "message"=> "please provide a valid id",
+     ],400);
+   }
+  $getFile = $findData->image_file;
+  $getFile=="default-avatar.png"? :unlink("./profile_images/".$getFile); ///first we delete file
 
+  $profile_picture = $request->profile_image;
+
+  $file_name = "";
+  if($profile_picture==null)
+  {
+     $file_name = "default-avatar.png";
+  } else{
+    $generated_name = uniqid()."_".time().date("Ymd")."_IMG"; //change file name
+    $base64Image = $profile_picture;
+    $fileBin = file_get_contents($base64Image);
+    $mimeType = mime_content_type($base64Image);
+    if("image/png"==$mimeType)
+    {
+     $file_name = $generated_name.".png";
+    }else if("image/jpg"==$mimeType)
+    {
+     $file_name = $generated_name.".jpg";
+    }else if("image/jpeg"==$mimeType)
+    {
+     $file_name = $generated_name.".jpeg";
+    }else{
+     return response()->json([
+       "success"=>false,
+       "message"=>"only png, jpg and jpeg files are accepted"
+     ],400);
+    }
+  }
+    $findData->firstname = $request->firstname;
+    $findData->phonenumber = $request->phonenumber;
+    $findData->image_file =  $file_name;
+    $findData->lastname = $request->lastname;
+    $findData->email = $request->email;
+    $findData->save();
+    
+    if($profile_picture==null){
+
+    }else{
+      file_put_contents("./profile_images/".$file_name,$fileBin);
+    }
+   
+    return response()->json([
+      'success' => true,
+      'message' => 'contact updated successsfully',
+  ], 200);
+
+  }
+
+  
+
+ public function deleteContent($id)
+ { 
+  $findData = $this->contacts->find($id);
+   if(!$findData)
+   {
+    return response()->json([
+      "success"=>false,
+      "message"=> "please provide a valid id",
+     ],400);
+   }
+  $getFile = $findData->image_file;
+    
+  if($findData->delete())
+  {
+    $getFile=="default-avatar.png"? :unlink("./profile_images/".$getFile); ///first we delete file
+    return response()->json([
+      'success' => true,
+      'message' => 'deleted successfully',
+  ], 200);
+  }else{
+    return response()->json([
+      'success' => false,
+      'message' => 'error in trying to delete content',
+  ], 400);
+  }
+  
+ }
 
   //end of this class
 }
