@@ -273,6 +273,7 @@ if($validator->fails()){
     return response()->json([
       'success' => true,
       'message' => 'deleted successfully',
+      'id'=>$id
   ], 200);
   }else{
     return response()->json([
